@@ -20,6 +20,15 @@ def main(argv=None):
 	if os.getuid() != 0:
 		raise PermissionError("This program must be executed as root.")
 
+	if len(argv) == 1:
+		installer()
+	elif len(argv) == 2 and argv[1] == "-u":
+		uninstaller()
+	else:
+		print("ERROR: Invalid arguments.")
+
+
+def installer():
 	# Generates /Library/PrivilegedHelperTools, owned by root
 	script_folder_path = pathlib.Path(script_folder)
 	if not script_folder_path.is_dir():
@@ -42,6 +51,10 @@ def main(argv=None):
 
 	print("Installation finished.")
 	print("To add a disk, use the following command:", script_folder+script_name, "add")
+
+
+def uninstaller():
+	raise NotImplementedError()
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
