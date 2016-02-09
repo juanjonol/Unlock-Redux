@@ -20,14 +20,14 @@ def main(argv=None):
 		raise PermissionError("This program must be executed as root.")
 
 	if len(argv) == 1:
-		installer()
+		installer(argv)
 	elif len(argv) == 2 and argv[1] == "-u":
 		uninstaller()
 	else:
 		print("ERROR: Invalid arguments.")
 
 
-def installer():
+def installer(argv):
 	# Generates /Library/PrivilegedHelperTools, owned by root
 	script_folder_path = pathlib.Path(script_folder)
 	if not script_folder_path.is_dir():
