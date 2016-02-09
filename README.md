@@ -20,7 +20,7 @@ Unlock allows the system to unlock and mount Core Storage encrypted volumes duri
 
 ## Uninstall
 
-Delete the files starting with “com.juanjonol.unlock” in the /Library/PrivilegedHelperTools and /Library/LaunchDaemons folders.
+Simply run 'sudo install.py -u'.
 
 ## Differences with Unlock
 
