@@ -14,13 +14,13 @@ Unlock allows the system to unlock and mount Core Storage encrypted volumes duri
 - Download this repository.
 - In Terminal, move to the folder with this files using the “cd” command.
 - Type the next command:
-	sudo install.py
+	`sudo install.py`
 - Use this command to add disks:
-	sudo /Library/PrivilegedHelperTools/com.juanjonol.unlock.py add
+	`sudo /Library/PrivilegedHelperTools/com.juanjonol.unlock.py add`
 
 ## Uninstall
 
-Simply run 'sudo install.py -u'.
+Simply run `sudo install.py -u`.
 
 ## Differences with Unlock
 
