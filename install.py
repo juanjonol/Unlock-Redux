@@ -12,8 +12,7 @@ script_name = "com.juanjonol.unlock.py"
 plist_name = "com.juanjonol.unlock.plist"
 script_folder = "/Library/PrivilegedHelperTools/"
 plist_folder = "/Library/LaunchDaemons/"
-
-# TODO: Add uninstaller
+passwords_folder = "Generated_Files/"
 
 def main(argv=None):
 
@@ -54,7 +53,9 @@ def installer():
 
 
 def uninstaller():
-	raise NotImplementedError()
+	os.remove(plist_folder + plist_name)
+	os.remove(script_folder + script_name)
+	shutil.rmtree(script_folder + passwords_folder)
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
