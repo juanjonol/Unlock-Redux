@@ -28,6 +28,9 @@ Simply run `sudo install.py -u`.
 - Unlock installation consists of downloading binaries from Internet using curl, [something that I don’t particularly enjoy.][1]
 - Unlock requires Internet access to be installed.
 - Unlock doesn’t have a prompt-free mode, for sysadmins.
+- Unlock uses the System Keychain to store the passwords. This program simply stores them in a JSON that can only be read and write by root. There are 2 reasons for this:
+	- The program is more simple this way.
+	- The protection of the passwords is the same: for an attacker to obtain the passwords, it needs root access.
 
 ## Support
 
