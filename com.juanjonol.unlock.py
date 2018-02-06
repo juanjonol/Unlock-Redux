@@ -64,9 +64,9 @@ def parse_args():
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
 	delete_command.add_argument("-p", "--password", help="Password of the disk.")
 
-	replace_description = "Replaces a value (UUID or password)."
+	replace_description = "Replaces an UUID."
 	replace_command = subparsers.add_parser("replace", help=replace_description, description=replace_description)
-	replace_command.add_argument("-o", "--old", help="Old value to replace.")
+	replace_command.add_argument("-o", "--old", help="Old value.")
 	replace_command.add_argument("-n", "--new", help="New value.")
 
 	uuid_description = "Returns the CoreStorage UUID of a volume."
@@ -150,7 +150,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 	print("The UUID is not saved, or the password for that UUID is incorrect.")
 
 
-# Replaces a UUID or password.
+# Replaces an UUID.
 def replace_value(old_value=None, new_value=None):
 	# If the old or the new value haven't been passed as arguments, request it.
 	if old_value is None:
@@ -165,10 +165,10 @@ def replace_value(old_value=None, new_value=None):
 	for dictionary in data:
 		for uuid in dictionary.keys():
 			password = dictionary[uuid]
-			if uuid == old_value or password == old_value:
+			if uuid == old_value:
 				delete_disk(uuid, password)
 				add_disk(new_value, password)
-				print("Replaced value", old_value, "with value", new_value)
+				print("Replaced UUID %s with UUID %s." % (old_value, new_value))
 				return
 
 	# It the program reach this point, the old_value wasn't in the file.
