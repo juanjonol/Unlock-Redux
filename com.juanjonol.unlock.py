@@ -13,6 +13,7 @@ import subprocess
 import argparse
 import getpass
 
+
 passwords_path = "/Library/PrivilegedHelperTools/Generated_Files/com.juanjonol.unlock.json"
 
 
@@ -111,7 +112,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	for dictionary in data:
 		if uuid in dictionary.keys():
 			print(
-				'The UUID is already added to the JSON. Use "com.juanjonol.unlock.py replace" if you want to replace the UUID or the password.')
+				'The UUID is already added to the JSON. Use "com.juanjonol.unlock.py replace" if you want to change it.')
 			return
 
 	# TODO: Test UUID and password before saving it
@@ -225,5 +226,16 @@ def write_json_secure(data, file_path):
 		print(json.dumps(data), file=output)
 
 
+def exception_handler(exception_type, exception, traceback):
+    """
+    Hides the traceback of all unhandled exceptions.
+    https://stackoverflow.com/questions/27674602/hide-traceback-unless-a-debug-flag-is-set/27674608#27674608
+    """
+    print("%s: %s" % (exception_type.__name__, exception))
+
+
 if __name__ == '__main__':
+	# Disable Traceback (to avoid leaking sensible data)
+	# sys.tracebacklimit = 0  # Doesn't work in Python 3: https://bugs.python.org/issue12276
+	sys.excepthook = exception_handler
 	sys.exit(main())
