@@ -80,7 +80,7 @@ def parse_args():
 # Decrypts the disks saved
 def decrypt_disks():
 	# Gets the JSON (or, if it doesn't exists, an empty list)
-	data = get_json(passwords_path)
+	data = get_json_secure(passwords_path)
 
 	# Decrypts all disks
 	for dictionary in data:
@@ -106,7 +106,7 @@ def add_disk(disk=None, uuid=None, password=None):
 		password = getpass.getpass("Introduce password: ")
 
 	# Gets the JSON (or, if it doesn't exists, an empty list)
-	data = get_json(passwords_path)
+	data = get_json_secure(passwords_path)
 
 	# Checks if the UUID is already added to the JSON
 	for dictionary in data:
@@ -135,7 +135,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 		password = getpass.getpass("Introduce password: ")
 
 	# Gets the JSON (or, if it doesn't exists, an empty list)
-	data = get_json(passwords_path)
+	data = get_json_secure(passwords_path)
 
 	# Checks if the UUID is already added to the JSON
 	for dictionary in data:
@@ -161,7 +161,7 @@ def replace_value(old_value=None, new_value=None):
 		new_value = input("Introduce new value: ")
 
 	# Gets the JSON (or, if it doesn't exists, an empty list)
-	data = get_json(passwords_path)
+	data = get_json_secure(passwords_path)
 
 	for dictionary in data:
 		for uuid in dictionary.keys():
@@ -198,8 +198,13 @@ def get_uuid(disk=None):
 
 
 # Returns the JSON string in the file on the given path, or an empty list if there isn't a file
-def get_json(file_path):
+def get_json_secure(file_path):
 	path = pathlib.Path(file_path)
+	uid = path.stat().st_uid
+	permissions = path.stat().st_mode
+	# If the file is not owned by root, or someone other than root can write on it, something is very very wrong.
+	if uid != 0 or (permissions & stat.S_IWGRP) or (permissions & stat.S_IWOTH):
+		raise PermissionError("The passwords file at %s doesn't have the correct permissions." % str(path))
 	if path.is_file():
 		try:
 			with open(file_path, "r") as input:
