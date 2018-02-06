@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Installation of Unlock.
+Installer of Unlock, a daemon to decrypt CoreStorage volumes automatically when macOS starts.
 """
 
 import sys
 import os
 import pathlib
 import shutil
+import argparse
+
 
 script_name = "com.juanjonol.unlock.py"
 plist_name = "com.juanjonol.unlock.plist"
@@ -14,17 +16,24 @@ script_folder = "/Library/PrivilegedHelperTools/"
 plist_folder = "/Library/LaunchDaemons/"
 passwords_folder = "Generated_Files/"
 
+# Parse the arguments given by the user.
+def parse_args():
+
+	parser = argparse.ArgumentParser(description=__doc__)
+	parser.add_argument('--version', action='version', version='1.0.0')
+	parser.add_argument("-u", "--uninstall", help='Uninstall Unlock.', action='store_true')
+	return parser.parse_args()
+
 def main(argv=None):
 
 	if os.getuid() != 0:
 		raise PermissionError("This program must be executed as root.")
 
-	if len(argv) == 1:
-		installer(argv)
-	elif len(argv) == 2 and argv[1] == "-u":
+	args = parse_args()
+	if args.uninstaller == True:
 		uninstaller()
 	else:
-		print("ERROR: Invalid arguments.")
+		installer(argv)
 
 
 def installer(argv):

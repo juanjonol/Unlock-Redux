@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3
 """
-OS X script to decrypt CoreStorage Volumes.
-
+macOS daemon to decrypt CoreStorage Volumes automatically at launch.
 Inspired by Unlock (https://github.com/jridgewell/Unlock).
 """
 
@@ -17,11 +16,11 @@ import getpass
 passwords_path = "/Library/PrivilegedHelperTools/Generated_Files/com.juanjonol.unlock.json"
 
 
-def main(argv=None):
+def main():
 	if not sys.platform == 'darwin':
 		raise NotImplementedError("This program only works in OS X")
 
-	args = parse_args(argv)
+	args = parse_args()
 
 	if args.subcommand == "add":
 		add_disk(disk=args.disk, uuid=args.uuid, password=args.password)
@@ -40,9 +39,9 @@ def main(argv=None):
 
 
 # Parse the arguments given by the user.
-def parse_args(argv):
+def parse_args():
 
-	parser = argparse.ArgumentParser(description="Decrypt CoreStorage volumes.")
+	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--version', action='version', version='1.0.0')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
@@ -229,4 +228,4 @@ def write_json_secure(data, file_path):
 
 
 if __name__ == '__main__':
-	sys.exit(main(sys.argv))
+	sys.exit(main())
