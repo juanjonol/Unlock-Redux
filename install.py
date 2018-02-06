@@ -57,8 +57,8 @@ def installer(argv):
 	os.chown(plist_new, 0, 0)
 	os.chmod(plist_new, 0o644)
 
-	print("Installation finished.")
-	print("To add a disk, use the following command:", script_folder+script_name, "add")
+	print('Installation finished.')
+	print('To add a disk, use the following command: "%s%s add"' % (script_folder, script_name))
 
 
 def uninstaller():

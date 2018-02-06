@@ -25,9 +25,9 @@ Simply run `sudo install.py -u`.
 ## Differences with Unlock
 
 - Unlock is a Objective-C project. I think this is better suited as a Python script.
-- Unlock installation consists of downloading binaries from Internet using curl, [something that I don’t particularly enjoy.][1]
-- Unlock requires Internet access to be installed.
-- Unlock doesn’t have a prompt-free mode, for sysadmins.
+- Unlock standard installation consists of downloading binaries from Internet using curl, [something that I don’t recommend.][1]
+- Unlock requires Internet access for its standard installation.
+- Unlock doesn’t have a non-interactive mode, useful for automation.
 
 ## Support
 

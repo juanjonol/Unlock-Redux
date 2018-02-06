@@ -113,7 +113,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	for dictionary in data:
 		if uuid in dictionary.keys():
 			print(
-				"The UUID is already added to the JSON. Use \"decrypt-disk -r\" if you want to replace the UUID or the password.")
+				'The UUID is already added to the JSON. Use "com.juanjonol.unlock.py replace" if you want to replace the UUID or the password.')
 			return
 
 	# TODO: Test UUID and password before saving it
@@ -149,7 +149,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 			return
 
 	# If the program reach this point, the UUID wasn't in the passwords file.
-	print("The UUID is not saved, or the password of that UUID is incorrect.")
+	print("The UUID is not saved, or the password for that UUID is incorrect.")
 
 
 # Replaces a UUID or password.
