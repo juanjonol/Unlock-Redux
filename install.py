@@ -18,14 +18,14 @@ passwords_folder = "Generated_Files/"
 
 # Parse the arguments given by the user.
 def parse_args():
-
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument('--version', action='version', version='1.0.0')
 	parser.add_argument("-u", "--uninstall", help='Uninstall Unlock.', action='store_true')
 	return parser.parse_args()
 
 def main(argv=None):
-
+	if not sys.platform == 'darwin':
+		raise NotImplementedError("This program only works in OS X")
 	if os.getuid() != 0:
 		raise PermissionError("This program must be executed as root.")
 

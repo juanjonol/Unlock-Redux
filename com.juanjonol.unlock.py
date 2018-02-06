@@ -19,6 +19,8 @@ passwords_path = "/Library/PrivilegedHelperTools/Generated_Files/com.juanjonol.u
 def main():
 	if not sys.platform == 'darwin':
 		raise NotImplementedError("This program only works in OS X")
+	if os.getuid() != 0:
+		raise PermissionError("This program must be executed as root (to save passwords in a secure way).")
 
 	args = parse_args()
 
@@ -93,10 +95,6 @@ def decrypt_disks():
 
 # Tests and saves an UUID and password, to latter decrypt
 def add_disk(disk=None, uuid=None, password=None):
-	# If the user is not root, give a warning
-	if os.getuid() != 0:
-		print("WARNING: The current user is not root. It's recommended that only root has access to the passwords.")
-
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None:
 		if disk is None:
