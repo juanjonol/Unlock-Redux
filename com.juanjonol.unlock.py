@@ -101,7 +101,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None:
 		if disk is None:
-			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
+			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
 		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
@@ -120,7 +120,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	# TODO: Test UUID and password before saving it
 
 	# Update the data in the JSON
-	data.append({uuid: password})
+	data.append({uuid: [password, disk_type]})
 	write_json_secure(data, passwords_path)
 	print("Added disk with UUID ", uuid)
 
@@ -130,7 +130,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None:
 		if disk is None:
-			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
+			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
 		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
@@ -143,7 +143,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 	for dictionary in data:
 		if uuid in dictionary.keys():
 			# Deletes the UUID
-			data.remove({uuid: password})  # This just works if the uuid and the password match.
+			data.remove({uuid: [password, disk_type]})  # This just works if the uuid and the password match.
 			os.remove(passwords_path)  # This shouldn't be needed (the file should be destroyed when writing in it).
 			write_json_secure(data, passwords_path)
 			print("Deleted disk with UUID ", uuid)
@@ -167,10 +167,10 @@ def replace_value(old_value=None, new_value=None):
 
 	for dictionary in data:
 		for uuid in dictionary.keys():
-			password = dictionary[uuid]
+			password = dictionary[uuid][0]
 			if uuid == old_value:
-				delete_disk(uuid, password)
-				add_disk(new_value, password)
+				delete_disk(uuid=old_value, password=password)
+				add_disk(uuid=new_value, password=password)
 				print("Replaced UUID %s with UUID %s." % (old_value, new_value))
 				return
 
