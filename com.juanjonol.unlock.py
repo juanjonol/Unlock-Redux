@@ -120,7 +120,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	# Update the data in the JSON
 	data.append({uuid: password})
 	write_json_secure(data, passwords_path)
-	print("Added disk with UUID", uuid)
+	print("Added disk with UUID ", uuid)
 
 
 # Deletes a UUID and his corresponding password
@@ -176,25 +176,40 @@ def replace_value(old_value=None, new_value=None):
 	print("The value given is not saved, so it can't be replaced.")
 
 	
-# Returns the UUID for a CoreStorage volume
 def get_uuid(disk=None):
+	"""Returns the UUID for a CoreStorage or APFS volume."""
+
 	# If the path hasn't been passed as argument, request it.
 	if disk is None:
-		disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
+		disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk"): ')
 
-	try:
+	try:  # First we see if it's a CoreStorage disk
 		command = ["diskutil", "coreStorage", "information", disk]
-		result = subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout.decode("utf-8")
-	except subprocess.CalledProcessError:
-		print("The given path is not from a CoreStorage disk.")
-
-	# Parse the UUID from the CoreStorage information
-	info_list = result.splitlines()
-	uuid_line = info_list[2]
-	uuid_line_splitted = uuid_line.split(" ")
-	uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
-	print(uuid)
-	return uuid
+		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
+		# Parse the UUID from the CoreStorage information
+		info_list = result.splitlines()
+		uuid_line = info_list[2]
+		uuid_line_splitted = uuid_line.split(" ")
+		uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
+		print(uuid)
+		return uuid
+	except:
+		print("The given path is not from a CoreStorage disk. Checking if it's an APFS volume.")
+	
+	try: # If it's not a CoreStorage disk, maybe it is an APFS disk
+		command = ["diskutil", "apfs", "list"]
+		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
+		disk = disk[len('/dev/'):]  # The /dev/ part is not showed in the APFS list
+		index = result.find(disk)
+		if index == -1:
+			raise AssertionError('The disk is not an APFS volume.')
+		UUID_SIZE = 36
+		uuid = result[index + len(disk + " ") : index + len(disk + " ") + UUID_SIZE]
+		print(uuid)
+		return uuid
+	except:
+		print('The given disk is neither an APFS volume.')
+		print('Make sure you have selected the correct disk ("/dev/diskX" for CoreStorage, "/dev/diskXsY" for APFS).')
 
 
 # Returns the JSON string in the file on the given path, or an empty list if there isn't a file
