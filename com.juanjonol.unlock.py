@@ -15,6 +15,8 @@ import getpass
 
 
 passwords_path = "/Library/PrivilegedHelperTools/Generated_Files/com.juanjonol.unlock.json"
+DISK_TYPE_APFS = 'APFS'
+DISK_TYPE_CORESTORAGE = 'CoreStorage'
 
 
 def main():
@@ -100,7 +102,7 @@ def add_disk(disk=None, uuid=None, password=None):
 	if uuid is None:
 		if disk is None:
 			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
-		uuid = get_uuid(disk)
+		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
 		password = getpass.getpass("Introduce password: ")
@@ -129,7 +131,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 	if uuid is None:
 		if disk is None:
 			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
-		uuid = get_uuid(disk)
+		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
 		password = getpass.getpass("Introduce password: ")
@@ -177,7 +179,7 @@ def replace_value(old_value=None, new_value=None):
 
 	
 def get_uuid(disk=None):
-	"""Returns the UUID for a CoreStorage or APFS volume."""
+	"""Returns the UUID and the type of disk for a CoreStorage or APFS volume."""
 
 	# If the path hasn't been passed as argument, request it.
 	if disk is None:
@@ -192,7 +194,7 @@ def get_uuid(disk=None):
 		uuid_line_splitted = uuid_line.split(" ")
 		uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
 		print(uuid)
-		return uuid
+		return uuid, DISK_TYPE_CORESTORAGE
 	except:
 		print("The given path is not from a CoreStorage disk. Checking if it's an APFS volume.")
 	
@@ -206,7 +208,7 @@ def get_uuid(disk=None):
 		UUID_SIZE = 36
 		uuid = result[index + len(disk + " ") : index + len(disk + " ") + UUID_SIZE]
 		print(uuid)
-		return uuid
+		return uuid, DISK_TYPE_APFS
 	except:
 		print('The given disk is neither an APFS volume.')
 		print('Make sure you have selected the correct disk ("/dev/diskX" for CoreStorage, "/dev/diskXsY" for APFS).')
