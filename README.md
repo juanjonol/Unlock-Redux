@@ -30,6 +30,7 @@ Simply run `sudo install.py -u`.
 - Unlock doesn’t have a non-interactive mode, useful for automation.
 - Unlock doesn't support APFS.
 - Unlock doesn't check that the password is correct before saving it.
+- [Unlock-Redux doesn't use the macOS Keychain to save the passwords][3].
 
 ## Support
 
@@ -37,3 +38,4 @@ If you have a problem, create an [issue][2]. Pull request are welcome.
 
 [1]:	http://curlpipesh.tumblr.com
 [2]:	https://github.com/juanjonol/Unlock-Redux/issues
+[3]:	https://github.com/juanjonol/Unlock-Redux/issues/8
