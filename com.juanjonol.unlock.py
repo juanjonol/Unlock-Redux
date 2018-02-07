@@ -162,10 +162,13 @@ def delete_disk(disk=None, uuid=None, disk_type=None, password=None):
 	for dictionary in data:
 		if uuid in dictionary.keys():
 			# Deletes the UUID
-			data.remove({uuid: [password, disk_type]})  # This just works if the uuid and the password match.
-			os.remove(passwords_path)  # This shouldn't be needed (the file should be destroyed when writing in it).
-			write_json_secure(data, passwords_path)
-			print("Deleted disk with UUID ", uuid)
+			try:
+				data.remove({uuid: [password, disk_type]})  # This just works if the uuid and the password match.
+				os.remove(passwords_path)  # This shouldn't be needed (the file should be destroyed when writing in it).
+				write_json_secure(data, passwords_path)
+				print("Deleted disk with UUID ", uuid)
+			except:
+				print("ERROR: the disk with UUID %s couldn't be deleted. Check that the password is correct." %uuid)
 			return
 
 	# If the program reach this point, the UUID wasn't in the passwords file.
