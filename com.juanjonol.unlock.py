@@ -89,13 +89,13 @@ def decrypt_disks():
 	# Decrypts all disks
 	for dictionary in data:
 		for uuid in dictionary.keys():
-			password = dictionary[uuid]
-
-			# Decrypt each disk
-			subprocess.run(["diskutil", "coreStorage", "unlockVolume", uuid, "-passphrase", password], check=True)
-
-			# Mount each disk
-			subprocess.run(["diskutil", "mount",  uuid], check=True)
+			password = dictionary[uuid][0]
+			disk_type = dictionary[uuid][1]
+			if disk_type == DISK_TYPE_CORESTORAGE:
+				subprocess.run(["diskutil", "coreStorage", "unlockVolume", uuid, "-passphrase", password], check=True)
+				subprocess.run(["diskutil", "mount",  uuid], check=True)
+			elif disk_type == DISK_TYPE_APFS:
+				subprocess.run(["diskutil", "apfs", "unlockVolume", uuid, "-passphrase", password], check=True)				
 
 
 # Tests and saves an UUID and password, to latter decrypt
