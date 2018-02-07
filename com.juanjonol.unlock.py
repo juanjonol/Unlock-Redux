@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 """
-macOS daemon to decrypt CoreStorage Volumes automatically at launch.
+macOS daemon to decrypt CoreStorage (HFS+) and APFS Volumes automatically at launch.
 Inspired by Unlock (https://github.com/jridgewell/Unlock).
 """
 
@@ -47,7 +47,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='1.0.0')
+	parser.add_argument('--version', action='version', version='2.0.0')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
@@ -74,7 +74,7 @@ def parse_args():
 	replace_command.add_argument("-o", "--old", help="Old value.")
 	replace_command.add_argument("-n", "--new", help="New value.")
 
-	uuid_description = "Returns the CoreStorage UUID of a volume."
+	uuid_description = "Returns the CoreStorage or APFS UUID of a volume."
 	uuid_command = subparsers.add_parser("uuid", help=uuid_description, description=uuid_description)
 	uuid_command.add_argument("-d", "--disk", help="Path to the disk.")
 
