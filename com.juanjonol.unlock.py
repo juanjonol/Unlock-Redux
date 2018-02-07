@@ -205,11 +205,12 @@ def get_uuid(disk=None):
 		command = ["diskutil", "apfs", "list"]
 		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
 		disk = disk[len('/dev/'):]  # The /dev/ part is not showed in the APFS list
+		disk = disk + " "  # With this space, bogus volumes like "disk1s" are detected and avoided.
 		index = result.find(disk)
 		if index == -1:
 			raise AssertionError('The disk is not an APFS volume.')
 		UUID_SIZE = 36
-		uuid = result[index + len(disk + " ") : index + len(disk + " ") + UUID_SIZE]
+		uuid = result[index + len(disk) : index + len(disk) + UUID_SIZE]
 		print(uuid)
 		return uuid, DISK_TYPE_APFS
 	except:
@@ -220,12 +221,12 @@ def get_uuid(disk=None):
 # Returns the JSON string in the file on the given path, or an empty list if there isn't a file
 def get_json_secure(file_path):
 	path = pathlib.Path(file_path)
-	uid = path.stat().st_uid
-	permissions = path.stat().st_mode
-	# If the file is not owned by root, or someone other than root can write on it, something is very very wrong.
-	if uid != 0 or (permissions & stat.S_IWGRP) or (permissions & stat.S_IWOTH):
-		raise PermissionError("The passwords file at %s doesn't have the correct permissions." % str(path))
 	if path.is_file():
+		uid = path.stat().st_uid
+		permissions = path.stat().st_mode
+		# If the file is not owned by root, or someone other than root can write on it, something is very very wrong.
+		if uid != 0 or (permissions & stat.S_IWGRP) or (permissions & stat.S_IWOTH):
+			raise PermissionError("The passwords file at %s doesn't have the correct permissions." % str(path))
 		try:
 			with open(file_path, "r") as input:
 				return json.loads(input.read())

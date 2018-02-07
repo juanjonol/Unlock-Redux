@@ -30,7 +30,7 @@ def main(argv=None):
 		raise PermissionError("This program must be executed as root.")
 
 	args = parse_args()
-	if args.uninstaller == True:
+	if args.uninstall == True:
 		uninstaller()
 	else:
 		installer(argv)
