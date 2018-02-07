@@ -28,10 +28,10 @@ def main():
 	args = parse_args()
 
 	if args.subcommand == "add":
-		add_disk(disk=args.disk, uuid=args.uuid, password=args.password)
+		add_disk(disk=args.disk, uuid=args.uuid, disk_type=args.type, password=args.password)
 
 	elif args.subcommand == "delete":
-		delete_disk(disk=args.disk, uuid=args.uuid, password=args.password)
+		delete_disk(disk=args.disk, uuid=args.uuid, disk_type=args.type, password=args.password)
 
 	elif args.subcommand == "replace":
 		replace_value(old_value=args.old, new_value=args.new)
@@ -58,6 +58,7 @@ def parse_args():
 	path_or_uuid_group = add_command.add_mutually_exclusive_group()
 	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
+	add_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	add_command.add_argument("-p", "--password", help="Password of the disk.")
 
 	delete_description = "Deletes the UUID and password of a disk."
@@ -65,6 +66,7 @@ def parse_args():
 	path_or_uuid_group = delete_command.add_mutually_exclusive_group()
 	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
+	delete_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	delete_command.add_argument("-p", "--password", help="Password of the disk.")
 
 	replace_description = "Replaces an UUID."
@@ -97,9 +99,9 @@ def decrypt_disks():
 
 
 # Tests and saves an UUID and password, to latter decrypt
-def add_disk(disk=None, uuid=None, password=None):
+def add_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
-	if uuid is None:
+	if uuid is None or disk_type is None:
 		if disk is None:
 			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
 		uuid, disk_type = get_uuid(disk)
@@ -126,9 +128,9 @@ def add_disk(disk=None, uuid=None, password=None):
 
 
 # Deletes a UUID and his corresponding password
-def delete_disk(disk=None, uuid=None, password=None):
+def delete_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
-	if uuid is None:
+	if uuid is None or disk_type is None:
 		if disk is None:
 			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
 		uuid, disk_type = get_uuid(disk)
@@ -168,9 +170,10 @@ def replace_value(old_value=None, new_value=None):
 	for dictionary in data:
 		for uuid in dictionary.keys():
 			password = dictionary[uuid][0]
+			disk_type = dictionary[uuid][1]
 			if uuid == old_value:
-				delete_disk(uuid=old_value, password=password)
-				add_disk(uuid=new_value, password=password)
+				delete_disk(uuid=old_value, disk_type=disk_type, password=password)
+				add_disk(uuid=new_value, disk_type=disk_type, password=password)
 				print("Replaced UUID %s with UUID %s." % (old_value, new_value))
 				return
 
