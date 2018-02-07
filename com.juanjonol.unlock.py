@@ -47,7 +47,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='2.0.0')
+	parser.add_argument('--version', action='version', version='2.1.0')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
@@ -56,7 +56,7 @@ def parse_args():
 	add_description = "Saves the UUID and password of a disk."
 	add_command = subparsers.add_parser("add", help=add_description, description=add_description)
 	path_or_uuid_group = add_command.add_mutually_exclusive_group()
-	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
+	path_or_uuid_group.add_argument("-d", "--disk", help='Path to the disk, in the form "/dev/<disk>" or "/Volumes/<name>".')
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
 	add_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	add_command.add_argument("-p", "--password", help="Password of the disk.")
@@ -64,7 +64,7 @@ def parse_args():
 	delete_description = "Deletes the UUID and password of a disk."
 	delete_command = subparsers.add_parser("delete", help=delete_description, description=delete_description)
 	path_or_uuid_group = delete_command.add_mutually_exclusive_group()
-	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
+	path_or_uuid_group.add_argument("-d", "--disk", help='Path to the disk, in the form "/dev/<disk>" or "/Volumes/<name>".')
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
 	delete_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	delete_command.add_argument("-p", "--password", help="Password of the disk.")
@@ -76,7 +76,7 @@ def parse_args():
 
 	uuid_description = "Returns the CoreStorage or APFS UUID of a volume."
 	uuid_command = subparsers.add_parser("uuid", help=uuid_description, description=uuid_description)
-	uuid_command.add_argument("-d", "--disk", help="Path to the disk.")
+	uuid_command.add_argument("-d", "--disk", help='Path to the disk, in the form "/dev/<disk>" or "/Volumes/<name>".')
 
 	return parser.parse_args()
 
@@ -103,7 +103,7 @@ def add_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None or disk_type is None:
 		if disk is None:
-			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
+			disk = input('Introduce the path to the disk to unlock: ')
 		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
@@ -132,7 +132,7 @@ def delete_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None or disk_type is None:
 		if disk is None:
-			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
+			disk = input('Introduce the path to the disk to unlock: ')
 		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
@@ -186,36 +186,27 @@ def get_uuid(disk=None):
 
 	# If the path hasn't been passed as argument, request it.
 	if disk is None:
-		disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk"): ')
+		disk = input('Introduce the path to the disk to unlock: ')
 
-	try:  # First we see if it's a CoreStorage disk
-		command = ["diskutil", "coreStorage", "information", disk]
+	try:
+		command = ["diskutil", "info", disk]
 		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
-		# Parse the UUID from the CoreStorage information
-		info_list = result.splitlines()
-		uuid_line = info_list[2]
-		uuid_line_splitted = uuid_line.split(" ")
-		uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
-		print(uuid)
-		return uuid, DISK_TYPE_CORESTORAGE
-	except:
-		print("The given path is not from a CoreStorage disk. Checking if it's an APFS volume.")
-	
-	try: # If it's not a CoreStorage disk, maybe it is an APFS disk
-		command = ["diskutil", "apfs", "list"]
-		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
-		disk = disk[len('/dev/'):]  # The /dev/ part is not showed in the APFS list
-		disk = disk + " "  # With this space, bogus volumes like "disk1s" are detected and avoided.
-		index = result.find(disk)
-		if index == -1:
-			raise AssertionError('The disk is not an APFS volume.')
 		UUID_SIZE = 36
-		uuid = result[index + len(disk) : index + len(disk) + UUID_SIZE]
+		UUID_PREFIX = 'Disk / Partition UUID:    '
+		index = result.find(UUID_PREFIX)
+		if index == -1:
+			raise AssertionError('UUID not found.')
+		uuid = result[index + len(UUID_PREFIX) : index + len(UUID_PREFIX) + UUID_SIZE]
+		if 'HFS+' in result:
+			disk_type = DISK_TYPE_CORESTORAGE
+		elif 'APFS' in result:
+			disk_type = DISK_TYPE_APFS
+		else:
+			raise AssertionError('Unsupported filesystem.')
 		print(uuid)
-		return uuid, DISK_TYPE_APFS
+		return uuid, disk_type
 	except:
-		print('The given disk is neither an APFS volume.')
-		print('Make sure you have selected the correct disk ("/dev/diskX" for CoreStorage, "/dev/diskXsY" for APFS).')
+		print("The given path is neither a CoreStorage disk nor an APFS volume.")
 
 
 # Returns the JSON string in the file on the given path, or an empty list if there isn't a file
