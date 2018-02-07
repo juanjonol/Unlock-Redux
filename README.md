@@ -6,12 +6,12 @@ Based on Unlock (https://github.com/jridgewell/unlock).
 
 ## Description
 
-Unlock allows the system to unlock and mount Core Storage encrypted volumes during boot. In other words, this allows you to log in as a user whose home directory is on an encrypted secondary disk without any problems.
+Unlock allows the system to unlock and mount Core Storage (HFS+) or APFS encrypted volumes during boot. In other words, this allows you to log in as a user whose home directory is on an encrypted secondary disk, partition or volume without any problems.
 
-##  Usage
+## Usage
 
 - Python 3 must be installed in /usr/local/bin/python3.
-- Download this repository.
+- Download this repository as a ZIP.
 - In Terminal, move to the folder with this files using the “cd” command.
 - Type the next command:
 	`sudo install.py`
@@ -28,10 +28,11 @@ Simply run `sudo install.py -u`.
 - Unlock standard installation consists of downloading binaries from Internet using curl, [something that I don’t recommend.][1]
 - Unlock requires Internet access for its standard installation.
 - Unlock doesn’t have a non-interactive mode, useful for automation.
+- Unlock doesn't support APFS.
 
 ## Support
 
-If you have a problem, create an [issue][2]. Pull request are very welcome.
+If you have a problem, create an [issue][2]. Pull request are welcome.
 
 [1]:	http://curlpipesh.tumblr.com
 [2]:	https://github.com/juanjonol/Unlock-Redux/issues

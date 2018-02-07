@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 """
-macOS daemon to decrypt CoreStorage Volumes automatically at launch.
+macOS daemon to decrypt CoreStorage (HFS+) and APFS Volumes automatically at launch.
 Inspired by Unlock (https://github.com/jridgewell/Unlock).
 """
 
@@ -15,6 +15,8 @@ import getpass
 
 
 passwords_path = "/Library/PrivilegedHelperTools/Generated_Files/com.juanjonol.unlock.json"
+DISK_TYPE_APFS = 'APFS'
+DISK_TYPE_CORESTORAGE = 'CoreStorage'
 
 
 def main():
@@ -26,10 +28,10 @@ def main():
 	args = parse_args()
 
 	if args.subcommand == "add":
-		add_disk(disk=args.disk, uuid=args.uuid, password=args.password)
+		add_disk(disk=args.disk, uuid=args.uuid, disk_type=args.type, password=args.password)
 
 	elif args.subcommand == "delete":
-		delete_disk(disk=args.disk, uuid=args.uuid, password=args.password)
+		delete_disk(disk=args.disk, uuid=args.uuid, disk_type=args.type, password=args.password)
 
 	elif args.subcommand == "replace":
 		replace_value(old_value=args.old, new_value=args.new)
@@ -45,7 +47,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='1.0.0')
+	parser.add_argument('--version', action='version', version='2.0.0')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
@@ -56,6 +58,7 @@ def parse_args():
 	path_or_uuid_group = add_command.add_mutually_exclusive_group()
 	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
+	add_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	add_command.add_argument("-p", "--password", help="Password of the disk.")
 
 	delete_description = "Deletes the UUID and password of a disk."
@@ -63,6 +66,7 @@ def parse_args():
 	path_or_uuid_group = delete_command.add_mutually_exclusive_group()
 	path_or_uuid_group.add_argument("-d", "--disk", help="Path to the disk, in the form \"/dev/diskN\".")
 	path_or_uuid_group.add_argument("-u", "--uuid", help="UUID of the disk.")
+	delete_command.add_argument("-t", "--type", help='Type of the disk ("CoreStorage" or "APFS"). Needed when using --uuid.')
 	delete_command.add_argument("-p", "--password", help="Password of the disk.")
 
 	replace_description = "Replaces an UUID."
@@ -70,7 +74,7 @@ def parse_args():
 	replace_command.add_argument("-o", "--old", help="Old value.")
 	replace_command.add_argument("-n", "--new", help="New value.")
 
-	uuid_description = "Returns the CoreStorage UUID of a volume."
+	uuid_description = "Returns the CoreStorage or APFS UUID of a volume."
 	uuid_command = subparsers.add_parser("uuid", help=uuid_description, description=uuid_description)
 	uuid_command.add_argument("-d", "--disk", help="Path to the disk.")
 
@@ -85,22 +89,22 @@ def decrypt_disks():
 	# Decrypts all disks
 	for dictionary in data:
 		for uuid in dictionary.keys():
-			password = dictionary[uuid]
-
-			# Decrypt each disk
-			subprocess.run(["diskutil", "coreStorage", "unlockVolume", uuid, "-passphrase", password], check=True)
-
-			# Mount each disk
-			subprocess.run(["diskutil", "mount",  uuid], check=True)
+			password = dictionary[uuid][0]
+			disk_type = dictionary[uuid][1]
+			if disk_type == DISK_TYPE_CORESTORAGE:
+				subprocess.run(["diskutil", "coreStorage", "unlockVolume", uuid, "-passphrase", password], check=True)
+				subprocess.run(["diskutil", "mount",  uuid], check=True)
+			elif disk_type == DISK_TYPE_APFS:
+				subprocess.run(["diskutil", "apfs", "unlockVolume", uuid, "-passphrase", password], check=True)				
 
 
 # Tests and saves an UUID and password, to latter decrypt
-def add_disk(disk=None, uuid=None, password=None):
+def add_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
-	if uuid is None:
+	if uuid is None or disk_type is None:
 		if disk is None:
-			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
-		uuid = get_uuid(disk)
+			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
+		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
 		password = getpass.getpass("Introduce password: ")
@@ -118,18 +122,18 @@ def add_disk(disk=None, uuid=None, password=None):
 	# TODO: Test UUID and password before saving it
 
 	# Update the data in the JSON
-	data.append({uuid: password})
+	data.append({uuid: [password, disk_type]})
 	write_json_secure(data, passwords_path)
-	print("Added disk with UUID", uuid)
+	print("Added disk with UUID ", uuid)
 
 
 # Deletes a UUID and his corresponding password
-def delete_disk(disk=None, uuid=None, password=None):
+def delete_disk(disk=None, uuid=None, disk_type=None, password=None):
 	# If the UUID or the password haven't been passed as arguments, request it.
-	if uuid is None:
+	if uuid is None or disk_type is None:
 		if disk is None:
-			disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
-		uuid = get_uuid(disk)
+			disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk/"): ')
+		uuid, disk_type = get_uuid(disk)
 
 	if password is None:
 		password = getpass.getpass("Introduce password: ")
@@ -141,7 +145,7 @@ def delete_disk(disk=None, uuid=None, password=None):
 	for dictionary in data:
 		if uuid in dictionary.keys():
 			# Deletes the UUID
-			data.remove({uuid: password})  # This just works if the uuid and the password match.
+			data.remove({uuid: [password, disk_type]})  # This just works if the uuid and the password match.
 			os.remove(passwords_path)  # This shouldn't be needed (the file should be destroyed when writing in it).
 			write_json_secure(data, passwords_path)
 			print("Deleted disk with UUID ", uuid)
@@ -165,10 +169,11 @@ def replace_value(old_value=None, new_value=None):
 
 	for dictionary in data:
 		for uuid in dictionary.keys():
-			password = dictionary[uuid]
+			password = dictionary[uuid][0]
+			disk_type = dictionary[uuid][1]
 			if uuid == old_value:
-				delete_disk(uuid, password)
-				add_disk(new_value, password)
+				delete_disk(uuid=old_value, disk_type=disk_type, password=password)
+				add_disk(uuid=new_value, disk_type=disk_type, password=password)
 				print("Replaced UUID %s with UUID %s." % (old_value, new_value))
 				return
 
@@ -176,36 +181,52 @@ def replace_value(old_value=None, new_value=None):
 	print("The value given is not saved, so it can't be replaced.")
 
 	
-# Returns the UUID for a CoreStorage volume
 def get_uuid(disk=None):
+	"""Returns the UUID and the type of disk for a CoreStorage or APFS volume."""
+
 	# If the path hasn't been passed as argument, request it.
 	if disk is None:
-		disk = input("Introduce the path to the disk to unlock (in the form \"/dev/disk/\"):")
+		disk = input('Introduce the path to the disk to unlock (in the form "/dev/disk"): ')
 
-	try:
+	try:  # First we see if it's a CoreStorage disk
 		command = ["diskutil", "coreStorage", "information", disk]
-		result = subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout.decode("utf-8")
-	except subprocess.CalledProcessError:
-		print("The given path is not from a CoreStorage disk.")
-
-	# Parse the UUID from the CoreStorage information
-	info_list = result.splitlines()
-	uuid_line = info_list[2]
-	uuid_line_splitted = uuid_line.split(" ")
-	uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
-	print(uuid)
-	return uuid
+		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
+		# Parse the UUID from the CoreStorage information
+		info_list = result.splitlines()
+		uuid_line = info_list[2]
+		uuid_line_splitted = uuid_line.split(" ")
+		uuid = uuid_line_splitted[len(uuid_line_splitted)-1]  # The UUID is the last element in the UUID line
+		print(uuid)
+		return uuid, DISK_TYPE_CORESTORAGE
+	except:
+		print("The given path is not from a CoreStorage disk. Checking if it's an APFS volume.")
+	
+	try: # If it's not a CoreStorage disk, maybe it is an APFS disk
+		command = ["diskutil", "apfs", "list"]
+		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
+		disk = disk[len('/dev/'):]  # The /dev/ part is not showed in the APFS list
+		disk = disk + " "  # With this space, bogus volumes like "disk1s" are detected and avoided.
+		index = result.find(disk)
+		if index == -1:
+			raise AssertionError('The disk is not an APFS volume.')
+		UUID_SIZE = 36
+		uuid = result[index + len(disk) : index + len(disk) + UUID_SIZE]
+		print(uuid)
+		return uuid, DISK_TYPE_APFS
+	except:
+		print('The given disk is neither an APFS volume.')
+		print('Make sure you have selected the correct disk ("/dev/diskX" for CoreStorage, "/dev/diskXsY" for APFS).')
 
 
 # Returns the JSON string in the file on the given path, or an empty list if there isn't a file
 def get_json_secure(file_path):
 	path = pathlib.Path(file_path)
-	uid = path.stat().st_uid
-	permissions = path.stat().st_mode
-	# If the file is not owned by root, or someone other than root can write on it, something is very very wrong.
-	if uid != 0 or (permissions & stat.S_IWGRP) or (permissions & stat.S_IWOTH):
-		raise PermissionError("The passwords file at %s doesn't have the correct permissions." % str(path))
 	if path.is_file():
+		uid = path.stat().st_uid
+		permissions = path.stat().st_mode
+		# If the file is not owned by root, or someone other than root can write on it, something is very very wrong.
+		if uid != 0 or (permissions & stat.S_IWGRP) or (permissions & stat.S_IWOTH):
+			raise PermissionError("The passwords file at %s doesn't have the correct permissions." % str(path))
 		try:
 			with open(file_path, "r") as input:
 				return json.loads(input.read())

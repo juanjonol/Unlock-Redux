@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Installer of Unlock, a daemon to decrypt CoreStorage volumes automatically when macOS starts.
+Installer of Unlock, a daemon to decrypt CoreStorage (HFS+) and APFS volumes automatically when macOS starts.
 """
 
 import sys
@@ -19,7 +19,7 @@ passwords_folder = "Generated_Files/"
 # Parse the arguments given by the user.
 def parse_args():
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='1.0.0')
+	parser.add_argument('--version', action='version', version='2.0.0')
 	parser.add_argument("-u", "--uninstall", help='Uninstall Unlock.', action='store_true')
 	return parser.parse_args()
 
@@ -30,7 +30,7 @@ def main(argv=None):
 		raise PermissionError("This program must be executed as root.")
 
 	args = parse_args()
-	if args.uninstaller == True:
+	if args.uninstall == True:
 		uninstaller()
 	else:
 		installer(argv)
