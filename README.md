@@ -29,6 +29,7 @@ Simply run `sudo install.py -u`.
 - Unlock requires Internet access for its standard installation.
 - Unlock doesn’t have a non-interactive mode, useful for automation.
 - Unlock doesn't support APFS.
+- Unlock doesn't check that the password is correct before saving it.
 
 ## Support
 

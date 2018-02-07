@@ -47,7 +47,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='2.1.0')
+	parser.add_argument('--version', action='version', version='2.2.0')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
@@ -98,8 +98,9 @@ def decrypt_disks():
 				subprocess.run(["diskutil", "apfs", "unlockVolume", uuid, "-passphrase", password], check=True)				
 
 
-# Tests and saves an UUID and password, to latter decrypt
 def add_disk(disk=None, uuid=None, disk_type=None, password=None):
+	"""Tests and saves an UUID and password, to use them latter in decrypt_disks()."""
+
 	# If the UUID or the password haven't been passed as arguments, request it.
 	if uuid is None or disk_type is None:
 		if disk is None:
@@ -119,7 +120,23 @@ def add_disk(disk=None, uuid=None, disk_type=None, password=None):
 				'The UUID is already added to the JSON. Use "com.juanjonol.unlock.py replace" if you want to change it.')
 			return
 
-	# TODO: Test UUID and password before saving it
+	# Test UUID and password before saving it
+	try:
+		# Try to unmount the disk. If it's successful or the disk wasn't mounted, the password can be tested.
+		subprocess.run(['diskutil', 'unmount', uuid])
+		if disk_type == DISK_TYPE_CORESTORAGE:
+			subprocess.run(["diskutil", "coreStorage", "unlockVolume", uuid, "-passphrase", password], check=True)
+		elif disk_type == DISK_TYPE_APFS:
+			subprocess.run(["diskutil", "apfs", "unlockVolume", uuid, "-passphrase", password], check=True)
+	except:
+		# If the password is incorrect, the unlock will fail. The unlock will also fail if the disk was mounted but 
+		# can't be unmounted, in which case the password can't be automatically tested as far as I know. 
+		# Instead, ask the user again for the password and check that they match.
+		print("The password couldn't be automatically checked.")
+		password_verification = getpass.getpass("Please introduce the password for the disk again: ")
+		if password_verification != password:
+			print("ERROR: The passwords don't match.")
+			return
 
 	# Update the data in the JSON
 	data.append({uuid: [password, disk_type]})
