@@ -47,7 +47,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='2.2.0')
+	parser.add_argument('--version', action='version', version='2.2.1')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
@@ -210,7 +210,7 @@ def get_uuid(disk=None):
 
 	try:
 		command = ["diskutil", "info", disk]
-		result = subprocess.run(command, stdout=subprocess.PIPE, check=True, encoding='utf-8').stdout
+		result = subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout.decode("utf-8")
 		UUID_SIZE = 36
 		UUID_PREFIX = 'Disk / Partition UUID:    '
 		index = result.find(UUID_PREFIX)
