@@ -4,6 +4,7 @@ macOS daemon to decrypt CoreStorage (HFS+) and APFS Volumes automatically at lau
 Inspired by Unlock (https://github.com/jridgewell/Unlock).
 """
 
+import re
 import sys
 import pathlib
 import json
@@ -211,12 +212,11 @@ def get_uuid(disk=None):
 	try:
 		command = ["diskutil", "info", disk]
 		result = subprocess.run(command, stdout=subprocess.PIPE, check=True).stdout.decode("utf-8")
-		UUID_SIZE = 36
-		UUID_PREFIX = 'Disk / Partition UUID:    '
-		index = result.find(UUID_PREFIX)
-		if index == -1:
+		pattern = re.compile('Disk / Partition UUID:\s*(\S*)')
+		match = pattern.search(result)
+		if match is None:
 			raise AssertionError('UUID not found.')
-		uuid = result[index + len(UUID_PREFIX) : index + len(UUID_PREFIX) + UUID_SIZE]
+		uuid = match.group(1)
 		if 'HFS+' in result:
 			disk_type = DISK_TYPE_CORESTORAGE
 		elif 'APFS' in result:
