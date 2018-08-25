@@ -19,7 +19,7 @@ passwords_folder = "Generated_Files/"
 # Parse the arguments given by the user.
 def parse_args():
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='2.2.1')
+	parser.add_argument('--version', action='version', version='2.2.2')
 	parser.add_argument("-u", "--uninstall", help='Uninstall Unlock.', action='store_true')
 	return parser.parse_args()
 

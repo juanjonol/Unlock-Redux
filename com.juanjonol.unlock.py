@@ -48,7 +48,7 @@ def main():
 def parse_args():
 
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument('--version', action='version', version='2.2.1')
+	parser.add_argument('--version', action='version', version='2.2.2')
 	subparsers = parser.add_subparsers(dest="subcommand")  # Store the used subcommand in the "subcommand" attribute
 
 	execute_description = "Decrypt the disks whose UUID and password has been saved."
